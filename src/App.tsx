@@ -2,12 +2,15 @@ import React, { Component } from 'react';
 import DataStreamer, { ServerRespond } from './DataStreamer';
 import Graph from './Graph';
 import './App.css';
+import { clearInterval } from 'timers';
 
 /**
  * State declaration for <App />
  */
 interface IState {
   data: ServerRespond[],
+  // add showGraph property;
+  showGraph: boolean,
 }
 
 /**
@@ -22,6 +25,8 @@ class App extends Component<{}, IState> {
       // data saves the server responds.
       // We use this state to parse data down to the child element (Graph) as element property
       data: [],
+      // set showGraph property in constructor
+      showGraph: false,
     };
   }
 
@@ -29,18 +34,26 @@ class App extends Component<{}, IState> {
    * Render Graph react component with state.data parse as property data
    */
   renderGraph() {
-    return (<Graph data={this.state.data}/>)
+    // set condition that renders graph only if showGraph property is true
+    if (this.state.showGraph) {
+      return (<Graph data={this.state.data}/>)
+    }
   }
 
   /**
    * Get new data from server and update the state with the new data
    */
   getDataFromServer() {
-    DataStreamer.getData((serverResponds: ServerRespond[]) => {
-      // Update the state by creating a new array of data that consists of
-      // Previous data in the state and the new data from server
-      this.setState({ data: [...this.state.data, ...serverResponds] });
-    });
+    let x = 0;
+    const intervalID = setInterval(() => {
+      DataStreamer.getData((serverResponds: ServerRespond[]) => {
+        this.setState({ data: serverResponds, showGraph: true });
+      });
+      x++;
+      if (x > 1000) {
+        clearInterval(intervalID);
+      }
+    }, 100);
   }
 
   /**
